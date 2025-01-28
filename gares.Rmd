@@ -1,0 +1,43 @@
+---
+title: "Gares_NA"
+author: "Enzo"
+date: "2025-01-27"
+output: html_document
+---
+
+```{r setup, include=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(readxl)
+library(ggplot2)
+library(DBI)
+library(dplyr)
+library(tidyr)
+barometre_sncf_2019 <- read_excel("C:/Users/Enzo/Desktop/LPSIG/Travail/cours_python/r/donnees/barometre_sncf_2019.xlsx")
+data_filtered <- barometre_sncf_2019%>% filter(Typologie_gare == 123 & Agence == "Nelle Aquitaine")
+barometre_sncf_2019$moyennenote <- NA
+data_filtered$moyennenote <- rowMeans(data_filtered[,c('Infos', 'Deplacement', 'Proprete', 'Agreable', 'Satisfaction', 'Services')], na.rm=TRUE)
+stats_descriptives <- data_filtered %>%
+    summarise(
+        moyenne = mean(moyennenote, na.rm = TRUE),
+        mediane = median(moyennenote, na.rm = TRUE),
+        ecart_type = sd(moyennenote, na.rm = TRUE)
+    )
+resultat_csv <- data_filtered %>% filter(moyennenote > 8.1)
+write.csv2(resultat_csv, "C:/Users/Enzo/Desktop/LPSIG/Travail/cours_python/r/donnees/resultat.csv", row.names = FALSE)
+data_long <- data_filtered %>%
+    pivot_longer(cols = c("Infos", "Deplacement", "Proprete", "Agreable", "Satisfaction", "Services"), names_to = "type_note", values_to = "valeur_note")
+
+ggplot(data_long, aes(x = type_note, y = valeur_note, fill = type_note)) +
+    geom_bar(stat = "identity", position = "dodge") +
+    facet_wrap(~ Gare, scales = "free_x") +
+    labs(title = "Notes par type pour chaque gare", x = "Type de note", y = "Note") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ggsave("C:/Users/Enzo/Desktop/LPSIG/Travail/cours_python/r/donnees_graph.png")
+```
+
+
